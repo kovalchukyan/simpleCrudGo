@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <title>Go, vanilla js, postgres App</title>
+</head>
+<body>
+<nav class="navbar navbar-dark bg-dark">
+    <a class="navbar-brand" id="nav-title">Customers list</a>
+    <button class="btn btn-dark my-2 my-sm-0" data-toggle="modal" data-target="#create-customer-modal" id="create-title">Create new customer</button>
+
+    <form class="form-inline">
+        <input class="form-control mr-sm-2" type="hidden" aria-label="Sort" id="sortCustomer" name="sortCustomer" value="ASC">
+        <input class="form-control mr-sm-2" type="search" placeholder="Search by name" aria-label="Search" id="search-customer">
+        <button class="btn btn-outline-success my-2 my-sm-0 mr-2" id="sort-btn">Sort by name</button>
+        <button class="btn btn-outline-success my-2 my-sm-0" id="interface-lang">RU</button>
+    </form>
+</nav>
+
+<div class="modal fade" id="create-customer-modal" tabindex="-1" role="dialog" aria-labelledby="create-customer-modal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-title">Create new customer</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form action="/create" method="post">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="inputFirstName" id="firstNameLabel">First Name</label>
+                            <input type="text" class="form-control" id="inputFirstName" name="inputFirstName">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputLastName" id="lastNameLabel">Last Name</label>
+                            <input type="text" class="form-control" id="inputLastName" name="inputLastName">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputAddress" id="cityLabel">City</label>
+                        <input type="text" class="form-control" id="inputAddress" placeholder="Tallinn" name="inputAddress">
+                    </div>
+                    <div class="form-group">
+                        <label for="inputEmail" id="emailLabel">E-mail</label>
+                        <input type="email" class="form-control" id="inputEmail" placeholder="example@mail.com" name="inputEmail">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="inputAge" id="ageLabel">Age</label>
+                            <input type="number" min="18" max="60" class="form-control" id="inputAge" name="inputAge">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="inputGender" id="genderLabel">Gender</label>
+                            <select id="inputGender" class="form-control" name="inputGender">
+                                <option selected>Male</option>
+                                <option>Female</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" id="close-btn">Close</button>
+                        <button type="submit" class="btn btn-dark" id="save-btn" disabled>Save</button>
+                    </div>
+                </form>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<table class="table table-hover">
+    <thead class="thead-dark">
+    <tr>
+        <th>ID</th>
+        <th scope="col">First name</th>
+        <th scope="col">Last name</th>
+        <th scope="col">City</th>
+        <th scope="col">E-mail</th>
+        <th scope="col">Age</th>
+        <th scope="col">Gender</th>
+        <th scope="col"></th>
+        <th scope="col"></th>
+    </tr>
+    </thead>
+    <tbody id="customers-table">
+        {{range .}}
+        <tr>
+            <td id="customerid">{{.Customerid}}</td>
+            <td>{{.Firstname}}</td>
+            <td>{{.Lastname}}</td>
+            <td>{{.City}}</td>
+            <td>{{.Email}}</td>
+            <td>{{.Age}}</td>
+            <td>{{.Gender}}</td>
+            <td class="text-success" data-toggle="modal" data-target="#editModal" onclick="editCustomer(this)">EDIT</td>
+            <td class="text-danger" data-toggle="modal" data-target="#deleteModal" onclick="deleteCustomer(this.parentNode.children[0].innerHTML)">DELETE</td>
+        </tr>
+        {{end}}
+    </tbody>
+</table>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteLabel">Delete customer</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <form action="/delete" method="post">
+            <div class="modal-body">
+                <label for="" class="center" id="deleteTitle">Are you sure?</label>
+                <input type="hidden" name="deleteId" id="deleteId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal" id="deleteCloseButton">Close</button>
+                <button type="submit" class="btn btn-dark" id="deleteButton">Delete</button>
+            </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModal" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editTitle">Edit customer</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form action="/edit" method="post">
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label for="inputAge" id="ageLabel">Age</label>
+                            <input type="number" min="18" max="60" class="form-control" id="inputEditAge" name="inputEditAge">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="inputEmail" id="emailLabel">E-mail</label>
+                            <input type="email" class="form-control" id="inputEditEmail" placeholder="example@mail.com" name="inputEditEmail">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="inputAddress" id="cityLabel">City</label>
+                            <input type="text" class="form-control" id="inputEditAddress" placeholder="Tallinn" name="inputEditAddress">
+                            <input id="editCustomerId" name="editCustomerId" type="hidden">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal" id="editFormCloseButton">Close</button>
+                        <button type="submit" class="btn btn-dark" id="editFormButton">Edit</button>
+                    </div>
+                </form>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+<script>
+let interfaceLang = document.getElementById("interface-lang");
+let customersTable = document.getElementById("customers-table");
+let searchCustomer = document.getElementById("search-customer");
+let sortBtn = document.getElementById("sort-btn");
+let sortCustomer = document.getElementById("sortCustomer");
+let navigationTitle = document.getElementById("nav-title");
+let createBtnTitle = document.getElementById("create-title");
+let modalTitle = document.getElementById("modal-title");
+let closeBtn = document.getElementById("close-btn");
+let saveBtn = document.getElementById("save-btn");
+let firstNameLabel = document.getElementById("firstNameLabel");
+let lastNameLabel = document.getElementById("lastNameLabel");
+let cityLabel = document.getElementById("cityLabel");
+let emailLabel = document.getElementById("emailLabel");
+let ageLabel = document.getElementById("ageLabel");
+let genderLabel = document.getElementById("genderLabel");
+let inputFirstName = document.getElementById("inputFirstName");
+let inputLastName = document.getElementById("inputLastName");
+let inputAddress = document.getElementById("inputAddress");
+let inputEmail = document.getElementById("inputEmail");
+let inputAge = document.getElementById("inputAge");
+let inputGender = document.getElementById("inputGender");
+let deleteId = document.getElementById("deleteId");
+let deleteLabel = document.getElementById("deleteLabel");
+let deleteTitle = document.getElementById("deleteTitle");
+let deleteCloseButton = document.getElementById("deleteCloseButton");
+let deleteButton = document.getElementById("deleteButton");
+let editId = document.getElementById("editCustomerId");
+let inputEditAge = document.getElementById("inputEditAge");
+let inputEditEmail = document.getElementById("inputEditEmail");
+let inputEditAddress = document.getElementById("inputEditAddress");
+let editTitle = document.getElementById("editTitle");
+let editFormCloseButton = document.getElementById("editFormCloseButton");
+let editFormButton = document.getElementById("editFormButton");
+
+
+let formIsValid = {
+    inputFirstName: false,
+    inputLastName: false,
+    inputAddress: false,
+    inputEmail: false,
+    inputAge: false,
+    inputEditAddress: true,
+    inputEditEmail: true,
+    inputEditAge: true
+};
+
+function deleteCustomer(id) {
+    deleteId.value = id;
+};
+
+function editCustomer(customer) {
+    //let id = customer.parentNode.children[0].innerHTML;
+    let age = customer.parentNode.children[5].innerHTML;
+    let city = customer.parentNode.children[3].innerHTML;
+    let email = customer.parentNode.children[4].innerHTML;
+    
+    console.log(customer.parentNode.children[0].innerHTML);
+    editId.value = customer.parentNode.children[0].innerHTML;
+    inputEditAge.value = age;
+    inputEditEmail.value = email;
+    inputEditAddress.value = city;
+};
+
+function formValidation() {
+    let disable = !formIsValid.inputFirstName || !formIsValid.inputLastName || !formIsValid.inputAddress || !formIsValid.inputEmail || !formIsValid.inputAge;
+    saveBtn.disabled = disable;
+};
+
+function formEditValidation() {
+    let disable = !formIsValid.inputEditAddress || !formIsValid.inputEditEmail || !formIsValid.inputEditAge;
+    editFormButton.disabled = disable;
+};
+
+inputFirstName.addEventListener('blur', function (event) {
+    let nameRegex = /^[a-zA-Z]{1,100}$/.test(event.target.value);
+
+    if(!nameRegex) {
+        inputFirstName.classList.add('is-invalid');
+        inputFirstName.classList.remove('is-valid');
+        formIsValid.inputFirstName = false;
+        formValidation();
+    } 
+    
+    if (nameRegex) {
+        inputFirstName.classList.remove('is-invalid')
+        inputFirstName.classList.add('is-valid');
+        formIsValid.inputFirstName = true;
+        formValidation();
+    }
+})
+
+inputLastName.addEventListener('blur', function (event) {
+    let nameRegex = /^[a-zA-Z]{1,100}$/.test(event.target.value);
+
+    if(!nameRegex) {
+        inputLastName.classList.add('is-invalid');
+        inputLastName.classList.remove('is-valid');
+        formIsValid.inputLastName = false;
+        formValidation();
+    } 
+    
+    if (nameRegex) {
+        inputLastName.classList.remove('is-invalid')
+        inputLastName.classList.add('is-valid');
+        formIsValid.inputLastName = true;
+        formValidation();
+    }
+})
+
+inputAddress.addEventListener('blur', function (event) {
+    let nameRegex = /^[a-zA-Z ]{1,200}$/.test(event.target.value);
+
+    if(!nameRegex) {
+        inputAddress.classList.add('is-invalid');
+        inputAddress.classList.remove('is-valid');
+        formIsValid.inputAddress = false;
+        formValidation();
+    } 
+    
+    if (nameRegex) {
+        inputAddress.classList.remove('is-invalid')
+        inputAddress.classList.add('is-valid');
+        formIsValid.inputAddress = true;
+        formValidation();
+    }
+}) 
+
+inputEditAddress.addEventListener('blur', function (event) {
+    let nameRegex = /^[a-zA-Z ]{1,200}$/.test(event.target.value);
+
+    if(!nameRegex) {
+        inputEditAddress.classList.add('is-invalid');
+        inputEditAddress.classList.remove('is-valid');
+        formIsValid.inputEditAddress = false;
+        formEditValidation();
+    } 
+    
+    if (nameRegex) {
+        inputEditAddress.classList.remove('is-invalid')
+        inputEditAddress.classList.add('is-valid');
+        formIsValid.inputEditAddress = true;
+        formEditValidation();
+    }
+}) 
+
+
+inputEmail.addEventListener('blur', function (event) {
+    let nameRegex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(event.target.value);
+
+    if(!nameRegex) {
+        inputEmail.classList.add('is-invalid');
+        inputEmail.classList.remove('is-valid');
+        formIsValid.inputEmail = false;
+        formValidation();
+    } 
+    
+    if (nameRegex) {
+        inputEmail.classList.remove('is-invalid')
+        inputEmail.classList.add('is-valid');
+        formIsValid.inputEmail = true;
+        formValidation();
+    }
+})
+
+inputEditEmail.addEventListener('blur', function (event) {
+    let nameRegex = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/.test(event.target.value);
+
+    if(!nameRegex) {
+        inputEditEmail.classList.add('is-invalid');
+        inputEditEmail.classList.remove('is-valid');
+        formIsValid.inputEditEmail = false;
+        formEditValidation();
+    } 
+    
+    if (nameRegex) {
+        inputEditEmail.classList.remove('is-invalid')
+        inputEditEmail.classList.add('is-valid');
+        formIsValid.inputEditEmail = true;
+        formEditValidation();
+    }
+})
+
+inputAge.addEventListener('blur', function (event) {
+    let value = event.target.value;
+    let isValid = value >= 18 && value <= 60;
+
+    if(!isValid) {
+        inputAge.classList.add('is-invalid');
+        inputAge.classList.remove('is-valid');
+        formIsValid.inputAge = false;
+        formValidation();
+    } 
+
+    if(isValid) {
+        inputAge.classList.add('is-valid');
+        inputAge.classList.remove('is-invalid');
+        formIsValid.inputAge = true;
+        formValidation();
+    }
+    
+})
+
+inputEditAge.addEventListener('blur', function (event) {
+    let value = event.target.value;
+    let isValid = value >= 18 && value <= 60;
+
+    if(!isValid) {
+        inputEditAge.classList.add('is-invalid');
+        inputEditAge.classList.remove('is-valid');
+        formIsValid.inputEditAge = false;
+        formEditValidation();
+    } 
+
+    if(isValid) {
+        inputEditAge.classList.add('is-valid');
+        inputEditAge.classList.remove('is-invalid');
+        formIsValid.inputEditAge = true;
+        formEditValidation();
+    }
+    
+})
+
+
+let state = {
+    interfaceLang: 'RU',
+    sort: 'ASC',
+    searchValue: '',
+    customers: [
+        { name: 'Yan', lastname: 'Kovalchuk', age: 27, gender: 'Male', email: 'user@mail.com', city: 'Tallinn' },
+        { name: 'John', lastname: 'Wick', age: 51, gender: 'Male', email: 'john@mail.com', city: 'Boston' }
+        ]
+};
+
+const dictionaries = {
+    EN: {
+        title: 'Customers list',
+        createBtnTitle: 'Create new customer',
+        closeBtn: 'Close',
+        saveBtn: 'Save',
+        firstName: 'First name',
+        lastName: 'Last name',
+        city: 'City',
+        email: 'E-mail',
+        age: 'Age',
+        gender: 'Gender',
+        deleteLabel: 'Delete customer',
+        deleteTitle: 'Are you sure?',
+        deleteCloseButton: 'Close',
+        deleteButton: 'Delete',
+        editTitle: 'Edit customer',
+        editFormCloseButton: 'Close',
+        editFormButton: 'Edit',
+        sortBtn: 'Sort by name'
+    },
+    RU: {
+        title: 'Список заказчиков',
+        createBtnTitle: 'Создать нового заказчика',
+        closeBtn: 'Закрыть',
+        saveBtn: 'Сохранить',
+        firstName: 'Имя',
+        lastName: 'Фамилия',
+        city: 'Город',
+        email: 'Э-майл',
+        age: 'Возраст',
+        gender: 'Пол',
+        deleteLabel: 'Удалить пользователя',
+        deleteTitle: 'Вы уверены?',
+        deleteCloseButton: 'Закрыть',
+        deleteButton: 'Удалить',
+        editTitle: 'Изменить пользователя',
+        editFormCloseButton: 'Закрыть',
+        editFormButton: 'Изменить',
+        sortBtn: 'Сортировка по имени'
+    }
+}
+
+
+
+interfaceLang.addEventListener('click', function (event) {
+    event.preventDefault();
+    let lang = state.interfaceLang;
+    if(lang === 'EN') {
+        interfaceLang.innerHTML = 'RU';
+        state.interfaceLang = 'RU';
+    } else {
+        interfaceLang.innerHTML = 'EN';
+        state.interfaceLang = 'EN';
+    }
+
+    navigationTitle.innerHTML = dictionaries[lang].title;
+    createBtnTitle.innerHTML = dictionaries[lang].createBtnTitle;
+    modalTitle.innerHTML = dictionaries[lang].createBtnTitle;
+    closeBtn.innerHTML = dictionaries[lang].closeBtn;
+    saveBtn.innerHTML = dictionaries[lang].saveBtn;
+    firstNameLabel.innerHTML = dictionaries[lang].firstName;
+    lastNameLabel.innerHTML = dictionaries[lang].lastName;
+    cityLabel.innerHTML = dictionaries[lang].city;
+    emailLabel.innerHTML = dictionaries[lang].email;
+    ageLabel.innerHTML = dictionaries[lang].age;
+    genderLabel.innerHTML = dictionaries[lang].gender;
+    deleteLabel.innerHTML = dictionaries[lang].deleteLabel;
+    deleteTitle.innerHTML = dictionaries[lang].deleteTitle;
+    deleteCloseButton.innerHTML = dictionaries[lang].deleteCloseButton;
+    deleteButton.innerHTML = dictionaries[lang].deleteButton;
+    editTitle.innerHTML = dictionaries[lang].editTitle;
+    editFormCloseButton.innerHTML = dictionaries[lang].editFormCloseButton;
+    editFormButton.innerHTML = dictionaries[lang].editFormButton;
+    sortBtn.innerHTML = dictionaries[lang].sortBtn;
+    
+});
+
+sortBtn.addEventListener('click', function (event) {
+    event.preventDefault();
+    let sort = state.sort;
+    if(sort === 'ASC') {
+        sortCustomer.value = 'DESC';
+        state.sort = 'DESC';
+    } else {
+        sortCustomer.value = 'ASC';
+        state.sort = 'ASC';
+    }
+})
+
+
+</script>
+
+</body>
+</html>
